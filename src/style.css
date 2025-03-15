@@ -3,4 +3,5 @@
   height: 256px;
   overflow: auto;
   font-family: monospace;
+  white-space: pre;
 }

@@ -2,7 +2,7 @@ const consoleElement = document.querySelector("#console");
 
 const print = (text = "") => {
   const lineDiv = document.createElement("div");
-  lineDiv.textContent = `> ${text}`;
+  lineDiv.innerHTML = `> ${text}`;
   lineDiv.classList.add("console-line");
 
   consoleElement.appendChild(lineDiv);
@@ -10,36 +10,27 @@ const print = (text = "") => {
   consoleElement.scrollTop = consoleElement.scrollHeight;
 };
 
-const RequestDevice = () => {
-  navigator.usb
-    // .requestDevice({ filters: [{ vendorId: 0x2341 }] }) //arduiono micro
-    .requestDevice({ filters: [{ vendorId: 0x0694 }] }) // LEGO
-    .then((device) => {
-      console.log(device.productName);
-      console.log(device.manufacturerName);
-      console.log(device);
-    })
-    .catch((error) => {
-      console.error(error);
-    });
-};
-
 const GetDevices = () => {
+  print("Finding devices");
   navigator.usb.getDevices().then((devices) => {
-    devices.forEach((device) => {
-      console.log(device.productName); // "Arduino Micro"
-      console.log(device.manufacturerName); // "Arduino LLC"
-      console.log(device.serialNumber);
-      console.log(device);
+    devices.forEach((device, index) => {
+      print(`Device ${index}:`);
+      print(`Product name:        ${device.productName}`);
+      print(`Manufacturer name:   ${device.manufacturerName}`);
+      print(`Serial:              ${device.serialNumber}`);
     });
+    print();
   });
 };
 
 const ConnectToNXT = async () => {
   try {
+    print("Requesting connection..");
     const device = await navigator.usb.requestDevice({
       filters: [{ vendorId: 0x0694 }], // LEGO
     });
+
+    print("Attempting to communicate..");
 
     await device.open();
 
@@ -50,15 +41,28 @@ const ConnectToNXT = async () => {
     await device.claimInterface(0);
 
     const command = new Uint8Array([
-      0x01, // direct command (with response)
-      0x88, // get battery level
+      0x01, // system command, reply required
+      0x88, // get firmware version
     ]);
+
+    // Expected output:
+    // 0: 0x02
+    // 1: 0x88
+    // 2: status, 0 equals success, otherwise indicates error message
+    // 3: minor version of protocol
+    // 4: major version of protocol
+    // 5: minor version of firmware
+    // 6: major version of firmware
+    //
+    // from the lego mindstorms nxt communication protocol docs
 
     await device.transferOut(1, command);
 
     console.log(device.configuration.interfaces[0]);
 
     const result = await device.transferIn(2, 64);
+
+    print("Received data!");
 
     const bytes = new Uint8Array(result.data.buffer);
 
@@ -69,26 +73,25 @@ const ConnectToNXT = async () => {
       majorFirmware: bytes[6],
     };
 
-    print();
     print("Firmware and protocol version:");
-    print(JSON.stringify(data));
-
-    // const batteryLevel = result.data.getUint16(3, true);
-
-    // console.log(batteryLevel);
+    print(
+      `Protocol version: <b>${data.majorProtocol}.${data.minorProtocol}</b>; Firmware version: <b>${data.majorFirmware}.${data.minorFirmware}</b>`
+    );
+    print();
 
     await device.close();
   } catch (error) {
     console.error(error);
+    print(`Error: ${error}`);
+    print();
   }
 };
 
-const btnRequestDevice = document.querySelector("#btn_request_device");
 const btnGetDevices = document.querySelector("#btn_get_devices");
 const btnConnectToNxt = document.querySelector("#btn_connect_to_nxt");
 
-btnRequestDevice.addEventListener("click", RequestDevice);
 btnGetDevices.addEventListener("click", GetDevices);
 btnConnectToNxt.addEventListener("click", ConnectToNXT);
 
 print("This is the output console");
+print();
