@@ -1,3 +1,15 @@
+const consoleElement = document.querySelector("#console");
+
+const print = (text = "") => {
+  const lineDiv = document.createElement("div");
+  lineDiv.textContent = `> ${text}`;
+  lineDiv.classList.add("console-line");
+
+  consoleElement.appendChild(lineDiv);
+
+  consoleElement.scrollTop = consoleElement.scrollHeight;
+};
+
 const RequestDevice = () => {
   navigator.usb
     // .requestDevice({ filters: [{ vendorId: 0x2341 }] }) //arduiono micro
@@ -38,19 +50,32 @@ const ConnectToNXT = async () => {
     await device.claimInterface(0);
 
     const command = new Uint8Array([
-      0x02, // command length (2 bytes)
-      0x00, // command length continued
-      0x00, // direct command (with response)
-      0x0b, // get battery level
+      0x01, // direct command (with response)
+      0x88, // get battery level
     ]);
 
     await device.transferOut(1, command);
 
-    const result = await device.transferIn(1, 5);
+    console.log(device.configuration.interfaces[0]);
 
-    const batteryLevel = result.data.getUint16(3, true);
+    const result = await device.transferIn(2, 64);
 
-    console.log(batteryLevel);
+    const bytes = new Uint8Array(result.data.buffer);
+
+    const data = {
+      minorProtocol: bytes[3],
+      majorProtocol: bytes[4],
+      minorFirmware: bytes[5],
+      majorFirmware: bytes[6],
+    };
+
+    print();
+    print("Firmware and protocol version:");
+    print(JSON.stringify(data));
+
+    // const batteryLevel = result.data.getUint16(3, true);
+
+    // console.log(batteryLevel);
 
     await device.close();
   } catch (error) {
@@ -65,3 +90,5 @@ const btnConnectToNxt = document.querySelector("#btn_connect_to_nxt");
 btnRequestDevice.addEventListener("click", RequestDevice);
 btnGetDevices.addEventListener("click", GetDevices);
 btnConnectToNxt.addEventListener("click", ConnectToNXT);
+
+print("This is the output console");
