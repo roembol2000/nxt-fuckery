@@ -11,7 +11,7 @@ const print = (text = "") => {
 };
 
 const GetDevices = () => {
-  print("Finding devices");
+  print("Finding paired devices");
   navigator.usb.getDevices().then((devices) => {
     devices.forEach((device, index) => {
       print(`Device ${index}:`);
