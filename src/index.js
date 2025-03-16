@@ -1,5 +1,5 @@
 import Nxt from "./nxt.js";
-import { print } from "./util.js";
+import { print, toHexString } from "./util.js";
 
 const consoleElement = document.querySelector("#console");
 
@@ -21,12 +21,23 @@ const brick = new Nxt();
 const btnGetDevices = document.querySelector("#btn_get_devices");
 const btnConnectToNxt = document.querySelector("#btn_connect_to_nxt");
 const btnGetFirmware = document.querySelector("#btn_get_firmware");
+const btnGetDeviceInfo = document.querySelector("#btn_get_device_info");
 
 btnGetDevices.addEventListener("click", GetDevices);
 btnConnectToNxt.addEventListener("click", () => brick.connect("usb"));
 btnGetFirmware.addEventListener("click", async () => {
   const firmwareVersion = await brick.getFirmwareVersion();
   print(JSON.stringify(firmwareVersion));
+  print();
+});
+btnGetDeviceInfo.addEventListener("click", async () => {
+  const deviceInfo = await brick.getDeviceInfo();
+  print("Brick info:");
+  print(`  Brick name:..................${deviceInfo.nxtName}`);
+  // prettier-ignore
+  print(`  Bluetooth address:...........${toHexString(deviceInfo.btAddress, ":")}`);
+  print(`  Bluetooth signal strength:...${deviceInfo.btSignalStrength}`);
+  print(`  Free user flash:.............${deviceInfo.freeUserFlash} bytes`);
   print();
 });
 

@@ -1,4 +1,4 @@
-import { print } from "./util.js";
+import { print, toHexString } from "./util.js";
 
 /**
  * Communication interface for interacting with NXT
@@ -164,6 +164,55 @@ class Nxt {
       majorProtocol: data[4],
       minorFirmware: data[5],
       majorFirmware: data[6],
+    };
+  }
+
+  /**
+   * Get device info of connected brick
+   *
+   * @async
+   * @function getDeviceInfo
+   * @memberof Nxt
+   * @returns {Promise<{ nxtName: string, btAddress: string, btSignalStrength: number, freeUserFlash: number }>}
+   * @throws {Error}
+   */
+  async getDeviceInfo() {
+    if (!this.connectedDevice) {
+      throw new Error("No device connected");
+    }
+
+    await this.connectedDevice.sendCommand(new Uint8Array([0x01, 0x9b])); // Get device info
+
+    // Expected output:
+    // 0: 0x02
+    // 1: 0x9B
+    // 2: status, 0 equals success, otherwise indicates error message
+    // 3-17: NXT name
+    // 18-24: BT address
+    // 25: lsb of BT signal strength
+    // 28: msb of BT signal strength
+    // 29: lsb of free user flash
+    // 32: msb of free user flash
+
+    const data = await this.connectedDevice.receiveData();
+
+    const rawName = String.fromCharCode(...data.slice(3, 18));
+    const nxtName = rawName.replace(/\u0000/g, ""); // Remove null characters
+
+    const btAddress = data.slice(18, 24);
+
+    // untested
+    const btSignalStrength =
+      data[25] | (data[26] << 8) | (data[27] << 16) | (data[28] << 24);
+
+    const freeUserFlash =
+      data[29] | (data[30] << 8) | (data[31] << 16) | (data[32] << 24);
+
+    return {
+      nxtName,
+      btAddress,
+      btSignalStrength,
+      freeUserFlash,
     };
   }
 }
