@@ -215,6 +215,39 @@ class Nxt {
       freeUserFlash,
     };
   }
+
+  /**
+   * Set brick name, max 15 chars
+   *
+   * @async
+   * @function setBrickName
+   * @memberof Nxt
+   * @param {string} name
+   * @returns {Promise<void>}
+   * @throws {Error}
+   */
+  async setBrickName(name) {
+    if (!this.connectedDevice) {
+      throw new Error("No device connected");
+    }
+
+    if (name.length > 15) {
+      throw new Error("Name must be 15 characters or less");
+    }
+
+    const nameArray = new Uint8Array(15);
+    nameArray.set(name.split("").map((char) => char.charCodeAt(0)));
+
+    await this.connectedDevice.sendCommand(
+      new Uint8Array([0x01, 0x98, ...nameArray])
+    );
+
+    const data = await this.connectedDevice.receiveData();
+
+    if (data[2] !== 0) {
+      throw new Error(`Failed to set brick name, error code ${data[2]}`);
+    }
+  }
 }
 
 export default Nxt;

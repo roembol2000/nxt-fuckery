@@ -22,14 +22,18 @@ const btnGetDevices = document.querySelector("#btn_get_devices");
 const btnConnectToNxt = document.querySelector("#btn_connect_to_nxt");
 const btnGetFirmware = document.querySelector("#btn_get_firmware");
 const btnGetDeviceInfo = document.querySelector("#btn_get_device_info");
+const btnSetBrickName = document.querySelector("#btn_set_brick_name");
 
 btnGetDevices.addEventListener("click", GetDevices);
+
 btnConnectToNxt.addEventListener("click", () => brick.connect("usb"));
+
 btnGetFirmware.addEventListener("click", async () => {
   const firmwareVersion = await brick.getFirmwareVersion();
   print(JSON.stringify(firmwareVersion));
   print();
 });
+
 btnGetDeviceInfo.addEventListener("click", async () => {
   const deviceInfo = await brick.getDeviceInfo();
   print("Brick info:");
@@ -38,6 +42,14 @@ btnGetDeviceInfo.addEventListener("click", async () => {
   print(`  Bluetooth address:...........${toHexString(deviceInfo.btAddress, ":")}`);
   print(`  Bluetooth signal strength:...${deviceInfo.btSignalStrength}`);
   print(`  Free user flash:.............${deviceInfo.freeUserFlash} bytes`);
+  print();
+});
+
+btnSetBrickName.addEventListener("click", async () => {
+  const brickName = document.querySelector("#input_brick_name").value;
+  await brick.setBrickName(brickName);
+  print(`Brick name set to: "${brickName}"`);
+  print("Recommended to get device info to confirm!");
   print();
 });
 
